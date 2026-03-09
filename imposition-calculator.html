@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Imposition Calculator — directFX Solutions</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:        #2448C8;
+      --blue-dark:   #1535A0;
+      --blue-accent: #1A7FE8;
+      --black:       #111111;
+      --input-bg:    #F3EDE6;
+      --page-bg:     #F0F1F5;
+      --white:       #ffffff;
+      --text:        #1a1a1a;
+      --text-sub:    #555555;
+      --text-muted:  #888888;
+      --border:      #d6d6dc;
+      --radius:      10px;
+      --radius-sm:   6px;
+      --shadow:      0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--page-bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────── */
+    .app-header {
+      background: linear-gradient(135deg, #2B4ECE 0%, #1430A0 100%);
+      padding: 22px 20px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .app-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        118deg,
+        transparent 0px, transparent 55px,
+        rgba(255,255,255,0.035) 55px, rgba(255,255,255,0.035) 110px
+      );
+      pointer-events: none;
+    }
+    .header-inner {
+      position: relative;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+    .header-brand {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .header-brand span { color: rgba(255,255,255,0.9); }
+    .app-title {
+      color: #ffffff;
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+    }
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .app-subtitle {
+      color: rgba(255,255,255,0.7);
+      font-size: 12.5px;
+      flex: 1;
+    }
+    .version-badge {
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.9);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── Main layout ─────────────────────────── */
+    .main {
+      max-width: 580px;
+      margin: 0 auto;
+      padding: 18px 14px 48px;
+    }
+
+    /* ── Cards ───────────────────────────────── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid #e0e0e8;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: var(--text-muted);
+      margin-bottom: 13px;
+    }
+
+    /* ── Form elements ───────────────────────── */
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-bottom: 5px;
+    }
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--input-bg);
+      font-size: 14px;
+      color: var(--text);
+      font-family: inherit;
+      -webkit-appearance: none;
+      appearance: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(36,72,200,0.12);
+    }
+    input[type="number"].has-error,
+    select.has-error { border-color: #dc2626; }
+
+    input[type="number"]:disabled {
+      background: #f2f2f2;
+      color: #bbb;
+      border-color: #e8e8e8;
+      cursor: not-allowed;
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 4.5L11 1' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 34px;
+      cursor: pointer;
+    }
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-wrap input[type="number"] {
+      padding-right: 30px;
+      text-align: right;
+    }
+    .unit-tag {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .helper { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+    .err    { font-size: 11px; color: #dc2626; margin-top: 4px; display: none; }
+
+    /* ── Production parameter rows ───────────── */
+    .param-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 0;
+    }
+    .param-row + .param-row { border-top: 1px solid #f0f0f4; }
+    .param-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 118px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .param-check input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--blue);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .param-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      user-select: none;
+    }
+    .param-input { flex: 1; }
+    .param-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 64px;
+      text-align: right;
+    }
+
+    /* ── Buttons ─────────────────────────────── */
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 2px;
+    }
+    .btn-calc {
+      background: var(--black);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 13px 22px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      letter-spacing: 0.2px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-calc:hover  { background: #2a2a2a; }
+    .btn-calc:active { transform: scale(0.98); }
+    .btn-reset {
+      background: var(--white);
+      color: var(--text-sub);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 13px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-reset:hover { background: #f7f7f8; }
+
+    /* ── Results ─────────────────────────────── */
+    #results { display: none; }
+    #results.visible { display: block; }
+
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0 14px;
+    }
+    .section-divider::before,
+    .section-divider::after {
+      content: ''; flex: 1;
+      height: 1px; background: #dde0e8;
+    }
+    .divider-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .stat-card {
+      background: var(--white);
+      border: 1px solid #e0e0e8;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 8px;
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--blue);
+    }
+    .stat-val.sm  { font-size: 20px; }
+    .stat-val.good { color: #16a34a; }
+    .stat-val.ok   { color: #ca8a04; }
+    .stat-val.poor { color: #dc2626; }
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    .diagram-card {
+      background: var(--white);
+      border: 1px solid #e0e0e8;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .diagram-svg { width: 100%; display: block; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+    .legend-swatch {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .detail-card {
+      background: var(--white);
+      border: 1px solid #e0e0e8;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 16px;
+      font-size: 13px;
+    }
+    .detail-row + .detail-row { border-top: 1px solid #f0f0f4; }
+    .dk { color: var(--text-sub); }
+    .dv { font-weight: 600; color: var(--text); }
+    .dv.dim { font-weight: 400; color: var(--text-muted); }
+
+    .fit-warn {
+      background: #fffbeb;
+      border: 1px solid #f59e0b;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #78350f;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    /* ── Footer ──────────────────────────────── */
+    .app-footer {
+      text-align: center;
+      padding: 14px;
+      font-size: 11px;
+      color: #aaa;
+      border-top: 1px solid #e0e0e8;
+    }
+
+    /* ── Responsive tweaks ───────────────────── */
+    @media (max-width: 380px) {
+      .stat-val     { font-size: 24px; }
+      .stat-val.sm  { font-size: 17px; }
+      .app-title    { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-brand">direct<span>FX</span> Solutions</div>
+    <div class="app-title">Imposition Calculator</div>
+    <div class="header-meta">
+      <div class="app-subtitle">Cut-and-stack layout optimizer for press sheets</div>
+      <div class="version-badge">v1.0</div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════ MAIN ═══════════════════════ -->
+<main class="main">
+
+  <!-- Sheet Size -->
+  <div class="card">
+    <div class="card-title">Sheet Size</div>
+    <label class="field-label" for="sheetSelect">Press Sheet</label>
+    <select id="sheetSelect">
+      <option value="">— Select a sheet size —</option>
+    </select>
+    <div id="sheetErr" class="err"></div>
+
+    <div id="customFields" style="display:none; margin-top:12px;">
+      <div class="input-row">
+        <div>
+          <label class="field-label" for="customW">Width</label>
+          <div class="input-wrap">
+            <input type="number" id="customW" step="0.125" min="0.001" placeholder="0.000" />
+            <span class="unit-tag">in</span>
+          </div>
+        </div>
+        <div>
+          <label class="field-label" for="customH">Height</label>
+          <div class="input-wrap">
+            <input type="number" id="customH" step="0.125" min="0.001" placeholder="0.000" />
+            <span class="unit-tag">in</span>
+          </div>
+        </div>
+      </div>
+      <div id="customErr" class="err"></div>
+    </div>
+  </div>
+
+  <!-- Finish Size -->
+  <div class="card">
+    <div class="card-title">Finish Size</div>
+    <div class="input-row">
+      <div>
+        <label class="field-label" for="artW">Width</label>
+        <div class="input-wrap">
+          <input type="number" id="artW" step="0.0625" min="0.001" placeholder="0.000" />
+          <span class="unit-tag">in</span>
+        </div>
+        <div id="artWErr" class="err"></div>
+      </div>
+      <div>
+        <label class="field-label" for="artH">Height</label>
+        <div class="input-wrap">
+          <input type="number" id="artH" step="0.0625" min="0.001" placeholder="0.000" />
+          <span class="unit-tag">in</span>
+        </div>
+        <div id="artHErr" class="err"></div>
+      </div>
+    </div>
+    <p class="helper">Enter the finished (trim) size — not including bleed.</p>
+  </div>
+
+  <!-- Production Parameters -->
+  <div class="card">
+    <div class="card-title">Production Parameters</div>
+
+    <div class="param-row">
+      <label class="param-check" for="bleedCheck">
+        <input type="checkbox" id="bleedCheck" checked />
+        <span class="param-name">Bleed</span>
+      </label>
+      <div class="param-input">
+        <div class="input-wrap">
+          <input type="number" id="bleedVal" step="0.0625" min="0" />
+          <span class="unit-tag">in</span>
+        </div>
+      </div>
+      <span class="param-hint">Per side</span>
+    </div>
+
+    <div class="param-row">
+      <label class="param-check" for="gripperCheck">
+        <input type="checkbox" id="gripperCheck" />
+        <span class="param-name">Gripper</span>
+      </label>
+      <div class="param-input">
+        <div class="input-wrap">
+          <input type="number" id="gripperVal" step="0.0625" min="0" disabled />
+          <span class="unit-tag">in</span>
+        </div>
+      </div>
+      <span class="param-hint">One edge</span>
+    </div>
+
+    <div class="param-row">
+      <label class="param-check" for="gapCheck">
+        <input type="checkbox" id="gapCheck" />
+        <span class="param-name">Cutter Gap</span>
+      </label>
+      <div class="param-input">
+        <div class="input-wrap">
+          <input type="number" id="gapVal" step="0.0625" min="0" disabled />
+          <span class="unit-tag">in</span>
+        </div>
+      </div>
+      <span class="param-hint">Between pieces</span>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="btn-row">
+    <button class="btn-calc" onclick="calculate()">Calculate</button>
+    <button class="btn-reset" onclick="resetAll()">Reset</button>
+  </div>
+
+  <!-- ─── Results ─── -->
+  <div id="results">
+    <div class="section-divider">
+      <span class="divider-label">Results</span>
+    </div>
+
+    <div id="fitWarn" class="fit-warn" style="display:none;">
+      ⚠️ The artwork does not fit on the selected sheet with the current parameters.
+      Try a larger sheet, or reduce the bleed, gripper, or cutter gap values.
+    </div>
+
+    <div id="statGrid" class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-val" id="statCount">—</div>
+        <div class="stat-label">Pieces Up</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val sm" id="statLayout">—</div>
+        <div class="stat-label">Cols × Rows</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statEff">—</div>
+        <div class="stat-label">Efficiency</div>
+      </div>
+    </div>
+
+    <div class="diagram-card" id="diagramCard">
+      <div class="card-title">Sheet Layout</div>
+      <svg id="diagramSvg" class="diagram-svg"
+           viewBox="0 0 370 310"
+           xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="legend" id="diagramLegend"></div>
+    </div>
+
+    <div class="detail-card" id="detailCard">
+      <div class="detail-row">
+        <span class="dk">Orientation used</span>
+        <span class="dv" id="detOrient">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="dk">Piece size on sheet</span>
+        <span class="dv" id="detPiece">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="dk">Alternate orientation</span>
+        <span class="dv dim" id="detAlt">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="dk">Sheet waste</span>
+        <span class="dv" id="detWaste">—</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="app-footer">
+  directFX Solutions &nbsp;·&nbsp; Imposition Calculator v1.0 &nbsp;·&nbsp; Internal Use Only
+</footer>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  CONFIGURATION — Edit this section to manage sheet sizes    ║
+// ║  Format: { label: 'Name', w: width_in, h: height_in }       ║
+// ╚══════════════════════════════════════════════════════════════╝
+const SHEET_SIZES = [
+  { label: '8.5 × 11  (Letter)',   w: 8.5,  h: 11   },
+  { label: '8.5 × 14  (Legal)',    w: 8.5,  h: 14   },
+  { label: '11 × 17   (Tabloid)',  w: 11,   h: 17   },
+  { label: '12 × 18',             w: 12,   h: 18   },
+  { label: '13 × 19',             w: 13,   h: 19   },
+  { label: '17 × 22',             w: 17,   h: 22   },
+  { label: '19 × 25',             w: 19,   h: 25   },
+  { label: '20 × 26',             w: 20,   h: 26   },
+  { label: '23 × 29',             w: 23,   h: 29   },
+  { label: '25 × 38',             w: 25,   h: 38   },
+  { label: '26 × 40',             w: 26,   h: 40   },
+];
+
+// Default values for production parameters (inches)
+const DEFAULTS = {
+  bleed:   0.125,
+  gripper: 0,
+  gap:     0,
+};
+// ══════════════════════════════════════════════════════════════
+
+// ── Build sheet dropdown ──────────────────────────────────────
+(function buildDropdown() {
+  const sel = document.getElementById('sheetSelect');
+  SHEET_SIZES.forEach((s, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = s.label;
+    sel.appendChild(o);
+  });
+  const custom = document.createElement('option');
+  custom.value = 'custom'; custom.textContent = 'Custom…';
+  sel.appendChild(custom);
+})();
+
+// ── Set default parameter values ─────────────────────────────
+document.getElementById('bleedVal').value   = DEFAULTS.bleed;
+document.getElementById('gripperVal').value = DEFAULTS.gripper;
+document.getElementById('gapVal').value     = DEFAULTS.gap;
+
+// ── Show/hide custom sheet fields ────────────────────────────
+document.getElementById('sheetSelect').addEventListener('change', function () {
+  document.getElementById('customFields').style.display =
+    this.value === 'custom' ? 'block' : 'none';
+  hide('sheetErr'); hide('customErr');
+  document.getElementById('sheetSelect').classList.remove('has-error');
+});
+
+// ── Toggle parameter inputs ───────────────────────────────────
+[['bleedCheck','bleedVal'],
+ ['gripperCheck','gripperVal'],
+ ['gapCheck','gapVal']
+].forEach(function([cbId, inpId]) {
+  document.getElementById(cbId).addEventListener('change', function() {
+    document.getElementById(inpId).disabled = !this.checked;
+  });
+});
+
+// ── Utilities ─────────────────────────────────────────────────
+function pos(v) { var n = parseFloat(v); return !isNaN(n) && n > 0; }
+function nn(v)  { var n = parseFloat(v); return isNaN(n) ? 0 : Math.max(0, n); }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function err(id, msg) {
+  var el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+}
+function fmtNum(n, dec) { return n.toFixed(dec !== undefined ? dec : 4); }
+
+// ── Core calculation ──────────────────────────────────────────
+function calcImposition(sW, sH, aW, aH, bleed, gripper, gap) {
+  var pW = aW + 2 * bleed;
+  var pH = aH + 2 * bleed;
+  var uW = sW;
+  var uH = sH - gripper;
+  if (uW <= 0 || uH <= 0 || pW <= 0 || pH <= 0) return null;
+
+  function fit(pw, ph) {
+    var c = Math.floor((uW + gap) / (pw + gap));
+    var r = Math.floor((uH + gap) / (ph + gap));
+    c = Math.max(0, c); r = Math.max(0, r);
+    return { cols: c, rows: r, count: c * r };
+  }
+
+  var natA = fit(pW, pH);  // natural
+  var natB = fit(pH, pW);  // rotated
+  var useB = natB.count > natA.count;
+  var best = useB ? natB : natA;
+  var alt  = useB ? natA : natB;
+
+  var rpW = useB ? pH : pW;
+  var rpH = useB ? pW : pH;
+  var eff = (best.count * rpW * rpH) / (sW * sH) * 100;
+
+  return {
+    count: best.count, cols: best.cols, rows: best.rows,
+    altCount: alt.count,
+    orient: useB ? 'Rotated 90°' : 'Natural orientation',
+    pW: rpW, pH: rpH,
+    bleed: bleed, gripper: gripper, gap: gap,
+    efficiency: eff,
+    usableW: uW, usableH: uH
+  };
+}
+
+// ── Calculate ─────────────────────────────────────────────────
+function calculate() {
+  // Clear previous errors
+  ['sheetErr','customErr','artWErr','artHErr'].forEach(hide);
+  ['sheetSelect','artW','artH'].forEach(function(id) {
+    document.getElementById(id).classList.remove('has-error');
+  });
+
+  var valid = true;
+  var sW = 0, sH = 0;
+  var sv = document.getElementById('sheetSelect').value;
+
+  if (sv === '') {
+    err('sheetErr', 'Please select a sheet size.');
+    document.getElementById('sheetSelect').classList.add('has-error');
+    valid = false;
+  } else if (sv === 'custom') {
+    var cw = document.getElementById('customW').value;
+    var ch = document.getElementById('customH').value;
+    if (!pos(cw) || !pos(ch)) {
+      err('customErr', 'Please enter valid custom sheet dimensions.');
+      valid = false;
+    } else {
+      sW = parseFloat(cw); sH = parseFloat(ch);
+    }
+  } else {
+    var s = SHEET_SIZES[parseInt(sv)];
+    sW = s.w; sH = s.h;
+  }
+
+  var aw = document.getElementById('artW').value;
+  var ah = document.getElementById('artH').value;
+  if (!pos(aw)) {
+    err('artWErr', 'Enter a valid width.');
+    document.getElementById('artW').classList.add('has-error');
+    valid = false;
+  }
+  if (!pos(ah)) {
+    err('artHErr', 'Enter a valid height.');
+    document.getElementById('artH').classList.add('has-error');
+    valid = false;
+  }
+  if (!valid) return;
+
+  var bleed   = document.getElementById('bleedCheck').checked   ? nn(document.getElementById('bleedVal').value)   : 0;
+  var gripper = document.getElementById('gripperCheck').checked ? nn(document.getElementById('gripperVal').value) : 0;
+  var gap     = document.getElementById('gapCheck').checked     ? nn(document.getElementById('gapVal').value)     : 0;
+
+  var res = calcImposition(sW, sH, parseFloat(aw), parseFloat(ah), bleed, gripper, gap);
+  renderResults(res, sW, sH);
+}
+
+// ── Render ────────────────────────────────────────────────────
+function renderResults(res, sW, sH) {
+  var wrap = document.getElementById('results');
+  wrap.classList.add('visible');
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  hide('fitWarn');
+
+  if (!res || res.count === 0) {
+    show('fitWarn');
+    hide('statGrid'); hide('diagramCard'); hide('detailCard');
+    return;
+  }
+
+  show('statGrid'); show('diagramCard'); show('detailCard');
+
+  // Stats
+  document.getElementById('statCount').textContent  = res.count;
+  document.getElementById('statLayout').textContent = res.cols + '\u00d7' + res.rows;
+
+  var effEl = document.getElementById('statEff');
+  effEl.textContent = fmtNum(res.efficiency, 1) + '%';
+  effEl.className = 'stat-val ' +
+    (res.efficiency >= 75 ? 'good' : res.efficiency >= 50 ? 'ok' : 'poor');
+
+  // Details
+  var altOrient = res.orient === 'Natural orientation' ? 'Rotated' : 'Natural';
+  document.getElementById('detOrient').textContent = res.orient;
+  document.getElementById('detPiece').textContent  =
+    fmtNum(res.pW) + '\u201d \u00d7 ' + fmtNum(res.pH) + '\u201d';
+  document.getElementById('detAlt').textContent    =
+    altOrient + ': ' + res.altCount + ' up';
+  document.getElementById('detWaste').textContent  =
+    fmtNum(100 - res.efficiency, 1) + '%';
+
+  renderDiagram(res, sW, sH);
+}
+
+// ── SVG Diagram ───────────────────────────────────────────────
+function renderDiagram(res, sW, sH) {
+  var VW = 370, VH = 310;
+  var PAD_L = 48, PAD_T = 36, PAD_R = 14, PAD_B = 14;
+  var drawW = VW - PAD_L - PAD_R;
+  var drawH = VH - PAD_T  - PAD_B;
+  var scale = Math.min(drawW / sW, drawH / sH);
+
+  var sw = sW * scale, sh = sH * scale;
+  var ox = PAD_L + (drawW - sw) / 2;
+  var oy = PAD_T + (drawH - sh) / 2;
+
+  var cols = res.cols, rows = res.rows;
+  var pW = res.pW, pH = res.pH;
+  var bleed = res.bleed, gap = res.gap, gripper = res.gripper;
+
+  var m = '';
+
+  // Sheet fill
+  m += '<rect x="' + ox + '" y="' + oy + '" width="' + sw + '" height="' + sh + '" fill="#f9f9f9" stroke="none"/>';
+
+  // Gripper band (bottom of sheet)
+  if (gripper > 0) {
+    var gH = gripper * scale;
+    m += '<rect x="' + ox + '" y="' + (oy + sh - gH) + '" width="' + sw + '" height="' + gH +
+         '" fill="#fca5a5" fill-opacity="0.55"/>';
+  }
+
+  // Pieces
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var px = ox + c * (pW + gap) * scale;
+      var py = oy + r * (pH + gap) * scale;
+      var bw = pW * scale, bh = pH * scale;
+      var bOff = bleed * scale;
+      var fw = (pW - 2 * bleed) * scale;
+      var fh = (pH - 2 * bleed) * scale;
+      // Bleed zone
+      if (bleed > 0) {
+        m += '<rect x="' + px + '" y="' + py + '" width="' + bw + '" height="' + bh +
+             '" fill="#fde68a" stroke="none"/>';
+      }
+      // Finished area
+      m += '<rect x="' + (px + bOff) + '" y="' + (py + bOff) + '" width="' + fw + '" height="' + fh +
+           '" fill="#bfdbfe" stroke="#3b82f6" stroke-width="0.6"/>';
+    }
+  }
+
+  // Sheet outline
+  m += '<rect x="' + ox + '" y="' + oy + '" width="' + sw + '" height="' + sh +
+       '" fill="none" stroke="#475569" stroke-width="1.5"/>';
+
+  // ── Width dimension line (above sheet) ──
+  var dimY  = oy - 18;
+  var tickH = 6;
+  m += '<line x1="' + ox + '" y1="' + dimY + '" x2="' + (ox + sw) + '" y2="' + dimY +
+       '" stroke="#888" stroke-width="1"/>';
+  m += '<line x1="' + ox + '" y1="' + (dimY - tickH) + '" x2="' + ox + '" y2="' + (dimY + tickH) +
+       '" stroke="#888" stroke-width="1.5"/>';
+  m += '<line x1="' + (ox + sw) + '" y1="' + (dimY - tickH) + '" x2="' + (ox + sw) + '" y2="' + (dimY + tickH) +
+       '" stroke="#888" stroke-width="1.5"/>';
+  // Extension lines from sheet corners up to dim line
+  m += '<line x1="' + ox + '" y1="' + (oy - 4) + '" x2="' + ox + '" y2="' + (dimY - tickH) +
+       '" stroke="#ccc" stroke-width="0.8" stroke-dasharray="2,2"/>';
+  m += '<line x1="' + (ox + sw) + '" y1="' + (oy - 4) + '" x2="' + (ox + sw) + '" y2="' + (dimY - tickH) +
+       '" stroke="#ccc" stroke-width="0.8" stroke-dasharray="2,2"/>';
+  // Label
+  m += '<text x="' + (ox + sw / 2) + '" y="' + (dimY - 8) +
+       '" text-anchor="middle" font-size="11" font-family="Segoe UI,sans-serif" fill="#444" font-weight="700">' +
+       sW + '"</text>';
+
+  // ── Height dimension line (left of sheet) ──
+  var dimX = ox - 22;
+  var tickW = 6;
+  var midY  = oy + sh / 2;
+  m += '<line x1="' + dimX + '" y1="' + oy + '" x2="' + dimX + '" y2="' + (oy + sh) +
+       '" stroke="#888" stroke-width="1"/>';
+  m += '<line x1="' + (dimX - tickW) + '" y1="' + oy + '" x2="' + (dimX + tickW) + '" y2="' + oy +
+       '" stroke="#888" stroke-width="1.5"/>';
+  m += '<line x1="' + (dimX - tickW) + '" y1="' + (oy + sh) + '" x2="' + (dimX + tickW) + '" y2="' + (oy + sh) +
+       '" stroke="#888" stroke-width="1.5"/>';
+  // Extension lines
+  m += '<line x1="' + (ox - 4) + '" y1="' + oy + '" x2="' + (dimX + tickW) + '" y2="' + oy +
+       '" stroke="#ccc" stroke-width="0.8" stroke-dasharray="2,2"/>';
+  m += '<line x1="' + (ox - 4) + '" y1="' + (oy + sh) + '" x2="' + (dimX + tickW) + '" y2="' + (oy + sh) +
+       '" stroke="#ccc" stroke-width="0.8" stroke-dasharray="2,2"/>';
+  // Rotated label
+  m += '<text x="' + dimX + '" y="' + midY +
+       '" text-anchor="middle" font-size="11" font-family="Segoe UI,sans-serif" fill="#444" font-weight="700"' +
+       ' transform="rotate(-90 ' + dimX + ' ' + midY + ')">' +
+       sH + '"</text>';
+
+  document.getElementById('diagramSvg').innerHTML = m;
+
+  // Legend
+  var items = [['#bfdbfe', '1px solid #3b82f6', 'Finished size']];
+  if (bleed   > 0) items.push(['#fde68a', 'none', 'Bleed']);
+  if (gripper > 0) items.push(['#fca5a5', 'none', 'Gripper']);
+
+  document.getElementById('diagramLegend').innerHTML = items.map(function(it) {
+    return '<div class="legend-item">' +
+      '<div class="legend-swatch" style="background:' + it[0] + ';border:' + it[1] + '"></div>' +
+      '<span>' + it[2] + '</span></div>';
+  }).join('');
+}
+
+// ── Reset ─────────────────────────────────────────────────────
+function resetAll() {
+  document.getElementById('sheetSelect').value = '';
+  document.getElementById('customFields').style.display = 'none';
+  document.getElementById('customW').value = '';
+  document.getElementById('customH').value = '';
+  document.getElementById('artW').value = '';
+  document.getElementById('artH').value = '';
+
+  document.getElementById('bleedCheck').checked   = true;
+  document.getElementById('bleedVal').value        = DEFAULTS.bleed;
+  document.getElementById('bleedVal').disabled     = false;
+
+  document.getElementById('gripperCheck').checked = false;
+  document.getElementById('gripperVal').value     = DEFAULTS.gripper;
+  document.getElementById('gripperVal').disabled  = true;
+
+  document.getElementById('gapCheck').checked     = false;
+  document.getElementById('gapVal').value         = DEFAULTS.gap;
+  document.getElementById('gapVal').disabled      = true;
+
+  document.getElementById('results').classList.remove('visible');
+  ['sheetErr','customErr','artWErr','artHErr'].forEach(hide);
+  ['sheetSelect','artW','artH'].forEach(function(id) {
+    document.getElementById(id).classList.remove('has-error');
+  });
+}
+</script>
+</body>
+</html>
