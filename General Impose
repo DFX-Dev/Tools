@@ -1,0 +1,54 @@
+import fitz  # PyMuPDF
+import os
+import math
+
+# Update dimensions for sheet and peice
+def run_universal_cut_stack(input_path, sheet_dims=(17, 11), piece_dims=(8.5, 11), margin=0):
+    output_path = input_path.replace(".pdf", "_CUT_STACK.pdf")
+    src = fitz.open(input_path)
+    dst = fitz.open()
+    
+    # Calculate Grid
+    cols = int((sheet_dims[0] - (2 * margin)) // piece_dims[0])
+    rows = int((sheet_dims[1] - (2 * margin)) // piece_dims[1])
+    n_up = cols * rows
+    total_pages = len(src)
+    
+    # Check if Static (1-2 pgs) or Variable (3+ pgs)
+    is_static = total_pages <= 2
+    print(f"Mode: {'STATIC (Duplicate)' if is_static else 'VARIABLE (Cut & Stack)'} | {n_up}-up")
+
+    if is_static:
+        # Loop through each page in source (Front/Back)
+        for page_num in range(total_pages):
+            sheet_page = dst.new_page(width=sheet_dims[0]*72, height=sheet_dims[1]*72)
+            for r in range(rows):
+                for c in range(cols):
+                    target = fitz.Rect((margin + c*piece_dims[0])*72, (margin + r*piece_dims[1])*72,
+                                       (margin + (c+1)*piece_dims[0])*72, (margin + (r+1)*piece_dims[1])*72)
+                    sheet_page.show_pdf_page(target, src, page_num)
+    else:
+        # --- CUT AND STACK LOGIC ---
+        num_sheets = math.ceil(total_pages / n_up)
+        
+        for s in range(num_sheets):
+            sheet_page = dst.new_page(width=sheet_dims[0]*72, height=sheet_dims[1]*72)
+            
+            for slot in range(n_up):
+                # Page index = (Slot Number * Total Sheets) + Current Sheet Index
+                page_to_grab = (slot * num_sheets) + s
+                
+                if page_to_grab < total_pages:
+                    c, r = slot % cols, slot // cols
+                    target = fitz.Rect((margin + c*piece_dims[0])*72, (margin + r*piece_dims[1])*72,
+                                       (margin + (c+1)*piece_dims[0])*72, (margin + (r+1)*piece_dims[1])*72)
+                    sheet_page.show_pdf_page(target, src, page_to_grab)
+
+    dst.save(output_path)
+    dst.close()
+    src.close()
+    print(f"Complete: {os.path.basename(output_path)}")
+
+# --- EXECUTION update file path ---
+FILE = r"C:\Users\8DATA2\Desktop\Imposition\GeneralImpositionEngine\DGL_EOR_Trilogy_030226_3 pagers.pdf"
+run_universal_cut_stack(FILE)
