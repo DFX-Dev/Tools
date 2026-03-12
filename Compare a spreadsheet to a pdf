@@ -1,0 +1,49 @@
+import pandas as pd
+from PyPDF2 import PdfReader
+
+def find_missing_names(pdf_path, excel_path, column_name):
+    # 1. Extract text from the PDF
+    print("Reading PDF...")
+    pdf_text = ""
+    reader = PdfReader(pdf_path)
+    for page in reader.pages:
+        pdf_text += page.extract_text() or ""
+    
+    # Normalize the PDF text (lowercase for easier matching)
+    pdf_text_lower = pdf_text.lower()
+
+    # 2. Read the Excel file
+    print("Reading Excel file...")
+    # Update 'Sheet1' if your sheet has a different name
+    df = pd.read_excel(excel_path, sheet_name='SortMe') 
+    
+    # Get the list of names from the specific column
+    names_list = df[column_name].dropna().tolist()
+
+    # 3. Check for missing names
+    print("Cross-referencing names...")
+    missing_names = []
+    
+    for name in names_list:
+        # Convert name to string and lowercase to match PDF
+        name_lower = str(name).lower().strip()
+        
+        if name_lower not in pdf_text_lower:
+            missing_names.append(name)
+
+    # 4. Output the results
+    print("\n--- RESULTS ---")
+    if not missing_names:
+        print("All names from the Excel sheet were found in the PDF!")
+    else:
+        print(f"Found {len(missing_names)} missing names:")
+        for missing in missing_names:
+            print(f"- {missing}")
+
+# --- RUN THE SCRIPT ---
+# Replace these variables with your actual file paths and column header
+PDF_FILE = r"C:\Users\8DATA2\Desktop\Imposition\2025 Compensation Package Merged Letters.pdf"
+EXCEL_FILE = r"C:\Users\8DATA2\Desktop\Imposition\SortMe.xlsx"
+EXCEL_COLUMN = 'Full Name' # The exact header of the column containing the names
+
+find_missing_names(PDF_FILE, EXCEL_FILE, EXCEL_COLUMN)
